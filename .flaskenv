@@ -1,0 +1,2 @@
+FLASK_APP=chirp.py
+FLASK_DEBUG=1
