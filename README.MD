@@ -38,6 +38,12 @@ Then you must run the following two commands to populate the database.
 
 There is no default User registered. You must register you own users.
 
+## Running Unit Tests
+```
+(venv) $ python tests.py
+```
+
+
 ## Error handling
 You can adjust error handing with environment variables.
 
