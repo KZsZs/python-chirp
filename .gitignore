@@ -3,3 +3,5 @@ migrations
 **/*/__pycache__
 .idea
 app.db
+
+logs

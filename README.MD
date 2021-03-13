@@ -19,21 +19,39 @@ You can allow Pycharm to do this or you can do this manually.
 ### Prepare Database
 For the first time you must run the following command to create an SQLite file.
 ```commandline
-flask db init
+(venv) $ flask db init
 ```
 
 Then you must run the following two commands to populate the database.
 ```commandline
-flask db migrate
+(venv) $ flask db migrate
 ```
 
 ```commandline
-flask db upgrade
+(venv) $ flask db upgrade
 ```
 
 ### Starting the Application
 ```commandline
-flask run
+(venv) $ flask run
 ```
 
 There is no default User registered. You must register you own users.
+
+## Error handling
+You can adjust error handing with environment variables.
+
+Depending on your operating system (windows SET linux EXPORT) use the comand to
+export these environment variables
+```
+set FLASK_DEBUG=1 # to enable debug mode, default 0 --> nice/custom error pages + SMPT error sending
+set MAIL_SERVER=localhost # to set SMTP server name
+set MAIL_PORT=8025 # to set SMTP port
+```
+
+You can also run an SMPTD python mock SMTP server in another terminal.
+```
+(venv) $ python -m smtpd -n -c DebuggingServer localhost:8025
+```
+
+You will see mails sent in the mock terminal output.
