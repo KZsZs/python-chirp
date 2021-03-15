@@ -1,0 +1,64 @@
+version: "3"
+
+services:
+  chirp:
+    build: .
+    container_name: chirp
+    image: tjozsa/chirp:latest
+    ports:
+    - 8000:5000
+    environment:
+      SECRET_KEY: "my-secret-key"
+      MAIL_SERVER: mailhog
+      MAIL_PORT: 1025
+      REDIS_URL: "redis://redis:6379/0"
+      ELASTICSEARCH_URL: "http://elasticsearch:9200"
+      DATABASE_URL: "mysql+pymysql://chirp:chirp@mariadb/chirp"
+
+  chirp-worker:
+    build: .
+    container_name: rq-worker
+    image: tjozsa/chirp:latest
+    environment:
+      SECRET_KEY: "my-secret-key"
+      MAIL_SERVER: mailhog
+      MAIL_PORT: 1025
+      REDIS_URL: "redis://redis-server:6379/0"
+      DATABASE_URL: "mysql+pymysql://chirp:chirp@mariadb/chirp"
+    entrypoint: "venv/bin/rq worker -u redis://redis:6379/0 chirp-tasks"
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: 'mailhog'
+    ports:
+      - 1025:1025 # smtp server
+      - 9025:8025 # web ui
+  redis:
+    container_name: redis
+    image: "redis:3-alpine"
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.11.2
+    container_name: elasticsearch
+    ports:
+    - 9200:9200
+    environment:
+      - node.name=es01
+      - cluster.name=es-docker-cluster
+      - cluster.initial_master_nodes=es01
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+  mariadb:
+    image: mariadb
+    restart: always
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_DATABASE: chirp
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes' # aposztrófok nélkül boolean true-ként értelmezi
+      MYSQL_USER: chirp
+      MYSQL_PASSWORD: chirp
