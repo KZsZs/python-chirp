@@ -195,6 +195,10 @@ msgid "Profile"
 msgstr "Perfil"
 
 #: app/templates/base.html:46
+msgid "About"
+msgstr "Sobre"
+
+#: app/templates/base.html:47
 msgid "Logout"
 msgstr "Salir"
 

@@ -1,7 +1,7 @@
 from flask import request
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, TextAreaField
-from wtforms.validators import ValidationError, DataRequired, Length
+from wtforms import StringField, SubmitField, TextAreaField, HiddenField
+from wtforms.validators import ValidationError, URL, Optional, DataRequired, Length
 from flask_babel import _, lazy_gettext as _l
 from app.models import User
 
@@ -28,6 +28,7 @@ class EmptyForm(FlaskForm):
 
 
 class PostForm(FlaskForm):
+    video_url = StringField(_l('Video url'), validators=[URL(), Optional()])
     post = TextAreaField(_l('Say something'), validators=[DataRequired()])
     submit = SubmitField(_l('Submit'))
 

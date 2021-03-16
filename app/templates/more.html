@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+    <h1>{{ _('Hi, %(username)s!', username=current_user.username) }}</h1>
+    {% if form %}
+    <p> Video url pattern: https://www.youtube.com/embed/{videoid}</p>
+    {{ wtf.quick_form(form) }}
+    <br>
+    {% endif %}
+    <span id="loaded" style="visibility: hidden"></span>
+    <div id="scroller">
+
+    </div>
+    <template id="post_template">
+        <table class="table table-hover">
+        <tr>
+            <td width="70px">
+                <a id="userprofile" href="">
+                    <img id="avatarimg" src="" />
+                </a>
+            </td>
+            <td>
+                <a id="userlink" href=""></a> <span>said</span> at <span id="timestamp"></span><br>
+                 <div class="embed-responsive embed-responsive-16by9" id="videowrapper">
+                    <iframe width="644" height="362" src="" frameborder="0" id="video"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen></iframe>
+                </div>
+                <span id="postbody"></span>
+            </td>
+        </tr>
+        </table>
+    </template>
+    <div id="sentinel">
+         <div class="spinner-border" role="status"></div>
+         <a onClick="loadItems()" class="btn btn-default" id="load_more_button"> load more</a>
+    </div>
+
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+ <script>
+        var scroller = document.querySelector("#scroller");
+        var template = document.querySelector("#post_template");
+
+        var loaded = document.querySelector("#loaded");
+        var counter = 0;
+
+        function loadItems() {
+            fetch(`/load?c=${counter}`).then((response) => {
+                response.json().then((data) => {
+                    console.log(data);
+                    if (data.results.length == 0) {
+                        sentinel.innerHTML = '<div class="alert alert-info" role="alert">No more content!</div>';
+                    }
+                    data = data.results;
+                    for (var i = 0; i < data.length; i++) {
+                        let template_clone = template.content.cloneNode(true);
+                        template_clone.querySelector("#userprofile").href = `/user/${data[i][3]}`;
+                        template_clone.querySelector("#avatarimg").src = `${data[i][4]}`;
+                        template_clone.querySelector("#userlink").href = `/user/${data[i][3]}`;
+                        template_clone.querySelector("#userlink").innerHTML = `${data[i][3]}`;
+                        template_clone.querySelector("#timestamp").innerHTML = `${data[i][2]}`;
+                        template_clone.querySelector("#postbody").innerHTML = `${data[i][1]}`;
+
+                        if(data[i][5] != "") {
+                            template_clone.querySelector("#video").src = data[i][5];
+                        } else {
+                            template_clone.querySelector("#videowrapper").remove();
+                        }
+
+                        scroller.appendChild(template_clone);
+                        counter += 1;
+                        loaded.innerText = `${counter} items loaded`;
+                    }
+                })
+            })
+        }
+
+        $( document ).ready(function() {
+            console.log( "ready!" );
+            loadItems();
+        });
+    </script>
+{% endblock %}

@@ -1,6 +1,7 @@
 from datetime import datetime
 from flask import render_template, flash, redirect, url_for, request, g, \
-    jsonify, current_app
+    jsonify, current_app, make_response
+import json
 from flask_login import current_user, login_required
 from flask_babel import _, get_locale
 from guess_language import guess_language
@@ -30,8 +31,12 @@ def index():
         language = guess_language(form.post.data)
         if language == 'UNKNOWN' or len(language) > 5:
             language = ''
-        post = Post(body=form.post.data, author=current_user,
+        if form.video_url:
+            post = Post(body=form.post.data, video_url=form.video_url.data, author=current_user,
                     language=language)
+        else:
+            post = Post(body=form.post.data, author=current_user,
+                        language=language)
         db.session.add(post)
         db.session.commit()
         flash(_('Your post is now live!'))
@@ -48,17 +53,51 @@ def index():
                            prev_url=prev_url)
 
 
-@bp.route('/explore')
+@bp.route('/load')
 @login_required
-def explore():
+def load():
+    res = None
+    quantity = current_app.config['POSTS_PER_PAGE']
+    if request.args:
+        posts = Post.query.order_by(Post.timestamp.desc()).all()
+        counter = int(request.args.get("c"))
+        if counter == 0:
+            res = make_response(json.dumps({ "results": [p.dumps() for p in posts[0: quantity]]}), 200)
+        elif counter == posts:
+            res = make_response(json.dumps({ "results": []}), 200)
+        else:
+            res = make_response(json.dumps({ "results": [p.dumps() for p in posts[counter: counter + quantity]]}), 200)
+
+    return res
+
+@bp.route('/more')
+@login_required
+def more():
     page = request.args.get('page', 1, type=int)
+
     posts = Post.query.order_by(Post.timestamp.desc()).paginate(
         page, current_app.config['POSTS_PER_PAGE'], False)
     next_url = url_for('main.explore', page=posts.next_num) \
         if posts.has_next else None
     prev_url = url_for('main.explore', page=posts.prev_num) \
         if posts.has_prev else None
-    return render_template('index.html', title=_('Explore'),
+    return render_template('more.html', title=_('Explore'),
+                           posts=posts.items, next_url=next_url,
+                           prev_url=prev_url)
+
+
+@bp.route('/explore')
+@login_required
+def explore():
+    page = request.args.get('page', 1, type=int)
+
+    posts = Post.query.order_by(Post.timestamp.desc()).paginate(
+        page, current_app.config['POSTS_PER_PAGE'], False)
+    next_url = url_for('main.explore', page=posts.next_num) \
+        if posts.has_next else None
+    prev_url = url_for('main.explore', page=posts.prev_num) \
+        if posts.has_prev else None
+    return render_template('explore.html', title=_('Explore'),
                            posts=posts.items, next_url=next_url,
                            prev_url=prev_url)
 
@@ -77,6 +116,11 @@ def user(username):
     form = EmptyForm()
     return render_template('user.html', user=user, posts=posts.items,
                            next_url=next_url, prev_url=prev_url, form=form)
+
+
+@bp.route('/about')
+def about():
+    return render_template('about.html')
 
 
 @bp.route('/user/<username>/popup')

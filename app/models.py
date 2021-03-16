@@ -12,7 +12,7 @@ import redis
 import rq
 from app import db, login
 from app.search import add_to_index, remove_from_index, query_index
-
+from json import JSONEncoder
 
 class SearchableMixin(object):
     @classmethod
@@ -240,17 +240,23 @@ def load_user(id):
     return User.query.get(int(id))
 
 
-class Post(SearchableMixin, db.Model):
+class Post(SearchableMixin, db.Model, JSONEncoder):
     __searchable__ = ['body']
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.String(140))
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    video_url = db.Column(db.String(250), default="None")
     language = db.Column(db.String(5))
 
     def __repr__(self):
         return '<Post {}>'.format(self.body)
 
+    def default(self, o):
+        return o.__data__
+
+    def dumps(self):
+        return [self.id, self.body, self.timestamp.strftime("%m/%d/%Y, %H:%M:%S"), self.author.username, self.author.avatar(70), self.video_url, self.language]
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -1,0 +1,7 @@
+Dear {{ user.username }},
+
+Welcome to Chirp. Your account on out modern microblogging site is ready.
+
+Sincerely,
+
+The chirp Team
